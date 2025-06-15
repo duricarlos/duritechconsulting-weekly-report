@@ -10,6 +10,9 @@ import dayjs from 'dayjs'
 import { createClient } from '@supabase/supabase-js'
 import { scryptSync, createDecipheriv } from 'crypto'
 import { generateEmailReport } from './email_report.js'
+import { generateAdminEmailReport } from './admin_email_report.js'
+
+let USERS_DATA = []
 
 // =================================================================
 // CONSTANTES Y CLIENTES
@@ -173,6 +176,17 @@ async function processClientReport(client) {
   // const supportItems = ['Image gallery updated on homepage.', 'Contact form validation fix.', 'Replaced broken Instagram link.']
   const supportItems = await getSupportTasks(client.client_email)
   const supportSummary = supportItems.map((item) => `<li>${item.title}</li>`).join('')
+  USERS_DATA.push({
+    CLIENT_FULLNAME: client.client_fullname,
+    CLIENT_EMAIL: client.client_email,
+    PAGE_VIEWS: umami.pageviewsValue,
+    UNIQUE_VISITORS: umami.visitorsValue,
+    BOUNCE_RATE: umami.bounceRate.toFixed(2),
+    AVG_DURATION: umami.avgVisitDuration.toFixed(2),
+    UPTIME_PERCENTAGE: Number(uptime),
+    SUPPORT_TASKS: supportItems.map((item) => item.title),
+    GENERATION_DATE: TODAY.format('MMMM D, YYYY'),
+  })
   const report = generateEmailReport({
     REPORT_PERIOD: `${START_DATE.format('DD MMMM YYYY')} - ${END_DATE.format('DD MMMM YYYY')}`,
     PAGE_VIEWS: umami.pageviewsValue,
@@ -225,6 +239,51 @@ async function processAllClients() {
       console.error(`❌ Falló la generación del reporte para ${clientEmail}:`, result.reason.message || result.reason)
     }
   })
+
+  // 5. Enviar correo a Admin
+  console.log(`Enviando reporte de administración a ${process.env.ADMIN_EMAIL}`)
+  const adminEmail = process.env.ADMIN_EMAIL
+  const adminReportData = {
+    REPORT_DATE: TODAY.format('MMMM D, YYYY'),
+    TOTAL_CUSTOMERS: USERS_DATA.length,
+    TOTAL_PAGE_VIEWS: USERS_DATA.reduce((acc, curr) => acc + curr.PAGE_VIEWS, 0),
+    TOTAL_VISITORS: USERS_DATA.reduce((acc, curr) => acc + curr.UNIQUE_VISITORS, 0),
+    TICKETS_RESOLVED: USERS_DATA.reduce((acc, curr) => acc + curr.SUPPORT_TASKS.length, 0),
+    OVERALL_UPTIME: (USERS_DATA.reduce((acc, curr) => acc + curr.UPTIME_PERCENTAGE, 0) / USERS_DATA.length).toFixed(2),
+    INCIDENT_SUMMARY: 
+      USERS_DATA
+      .filter((user) => user.SUPPORT_TASKS.length > 0)
+      .map((user) => `
+        <li style="margin-bottom: 6px;">${user.CLIENT_FULLNAME} - ${user.SUPPORT_TASKS.join(', ')}</li>
+        `).join('\n'),
+    GENERATION_TIMESTAMP: TODAY.format('MMMM D, YYYY'),
+    CUSTOMER_ROWS:
+      USERS_DATA.map((user) => `
+        <tr style="background-color: #f1f5f9;">
+          <td style="padding: 16px 12px; font-size: 14px; font-weight: 500; color: #1e293b;">
+            ${user.CLIENT_FULLNAME}
+          </td>
+          <td style="padding: 16px 12px; font-size: 14px; color: #64748b;">
+            ${user.CLIENT_EMAIL}
+          </td>
+          <td style="padding: 16px 12px; text-align: right; font-size: 14px; font-weight: 600; color: #0f172a;">
+            ${user.PAGE_VIEWS}
+          </td>
+          <td style="padding: 16px 12px; text-align: right; font-size: 14px; font-weight: 600; color: #0f172a;">
+            ${user.UNIQUE_VISITORS}
+          </td>
+          <td style="padding: 16px 12px; text-align: right; font-size: 14px; font-weight: 600; color: #dc2626;">
+            ${user.BOUNCE_RATE}%
+          </td>
+          <td style="padding: 16px 12px; text-align: right; font-size: 14px; font-weight: 600; color: #0f172a;">
+            ${user.AVG_DURATION}s
+          </td>
+        </tr>
+      `).join('\n'),
+  }
+
+  const adminReport = generateAdminEmailReport(adminReportData)
+  await sendEmail(adminReport, adminEmail)
 
   console.log('--- Proceso de reportes finalizado. ---')
 }
