@@ -11,6 +11,8 @@ import { createClient } from '@supabase/supabase-js'
 import { scryptSync, createDecipheriv } from 'crypto'
 import { generateEmailReport } from './email_report.js'
 import { generateAdminEmailReport } from './admin_email_report.js'
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore.js'
+dayjs.extend(isSameOrBefore)
 
 let USERS_DATA = []
 
@@ -223,7 +225,12 @@ async function processAllClients() {
   console.log(`Se encontraron ${clients.length} clientes. Procesando en paralelo...`)
 
   // 2. Mapear cada cliente a una promesa que genera y envía su reporte
-  const reportPromises = clients.map((client) => processClientReport(client))
+
+  // 2.1 Verificamos el date de start_report de cada cliente para saber si debemos generar el reporte. La fecha de HOY debe ser mayor o igual que la fecha de start_report.
+  const reportPromises = 
+    clients
+    .filter((client) => dayjs(client.start_report).isSameOrBefore(TODAY))
+    .map((client) => processClientReport(client))
 
   // 3. Ejecutar todas las promesas en paralelo con Promise.allSettled
   // Esto asegura que se procesen todos, incluso si algunos fallan.
