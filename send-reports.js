@@ -233,7 +233,7 @@ async function processAllClients() {
     .map((client) => processClientReport(client))
 
   // 3. Ejecutar todas las promesas en paralelo con Promise.allSettled
-  // Esto asegura que se procesen todos, incluso si algunos fallan.
+  // Esto asegura que se procesen todos, incluso si algunos fallan
   const results = await Promise.allSettled(reportPromises)
 
   // 4. Revisar los resultados
