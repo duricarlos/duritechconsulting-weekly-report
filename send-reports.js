@@ -181,6 +181,7 @@ async function processClientReport(client) {
   USERS_DATA.push({
     CLIENT_FULLNAME: client.client_fullname,
     CLIENT_EMAIL: client.client_email,
+    WEBSITE_URL: client.website_url,
     PAGE_VIEWS: umami.pageviewsValue,
     UNIQUE_VISITORS: umami.visitorsValue,
     BOUNCE_RATE: umami.bounceRate.toFixed(2),
@@ -198,6 +199,7 @@ async function processClientReport(client) {
     UPTIME_PERCENTAGE: uptime,
     SUPPORT_TASKS: supportSummary,
     GENERATION_DATE: TODAY.format('MMMM D, YYYY'),
+    WEBSITE_URL: client.website_url,
   })
 
   // 4. Enviar el email
@@ -272,6 +274,9 @@ async function processAllClients() {
           </td>
           <td style="padding: 16px 12px; font-size: 14px; color: #64748b;">
             ${user.CLIENT_EMAIL}
+          </td>
+          <td style="padding: 16px 12px; font-size: 14px; color: #64748b;">
+            ${user.WEBSITE_URL}
           </td>
           <td style="padding: 16px 12px; text-align: right; font-size: 14px; font-weight: 600; color: #0f172a;">
             ${user.PAGE_VIEWS}

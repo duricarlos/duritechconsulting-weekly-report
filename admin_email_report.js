@@ -108,6 +108,9 @@ export function generateAdminEmailReport(data) {
                                             <th style="padding: 16px 12px; text-align: left; font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0;">
                                                 Email
                                             </th>
+                                            <th style="padding: 16px 12px; text-align: left; font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0;">
+                                                Website URL
+                                            </th>
                                             <th style="padding: 16px 12px; text-align: right; font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0;">
                                                 Page Views
                                             </th>
